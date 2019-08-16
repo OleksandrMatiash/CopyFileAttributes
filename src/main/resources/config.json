@@ -1,0 +1,39 @@
+{
+    "hostConfigs": [
+        {
+            "alias": "",
+            "host": "",
+            "iconsDbName": null
+        },
+        {
+            "alias": "localhost",
+            "host": "mongo-0-srv.dgngames.com:27017",
+            "iconsDbName": "e88_slots-admindb"
+        },
+        {
+            "alias": "SlotDEMO",
+            "host": "infra-0-slotdemo-lts.dev-i.net:1626",
+            "iconsDbName": "slotdemo_slots-admindb"
+        },
+        {
+            "alias": "SlotDEV",
+            "host": "infra-0-slotdev-lts.dev-i.net:1616",
+            "iconsDbName": "slotdev_slots-admindb"
+        },
+        {
+            "alias": "DEV",
+            "host": "infra-0-dev-lts.dev-i.net:1565",
+            "iconsDbName": "dev_slots-admindb"
+        },
+        {
+            "alias": "QA",
+            "host": "infra-0-qa-lts.dev-i.net:1586",
+            "iconsDbName": "qa_slots-admindb"
+        },
+        {
+            "alias": "AppDEV",
+            "host": "infra-0-appdev-lts.dev-i.net:1606",
+            "iconsDbName": "appdev_slots-admindb"
+        }
+    ]
+}
