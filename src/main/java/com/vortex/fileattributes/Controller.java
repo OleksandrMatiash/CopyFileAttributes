@@ -1,23 +1,20 @@
 package com.vortex.fileattributes;
 
-import com.vortex.fileattributes.domain.HostConfig;
 import javafx.event.EventHandler;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import javafx.util.StringConverter;
 
 import java.io.File;
 import java.net.URL;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 
 public class Controller implements Initializable {
 
@@ -35,52 +32,45 @@ public class Controller implements Initializable {
 //    public ListView<String> srcIconsListView;
 //    public Button copyBtn;
 
-    public ChoiceBox<String> dstCB1;
-    public ChoiceBox<String> dstCB2;
-    public ChoiceBox<String> dstCB3;
-    public ChoiceBox<String> dstCB4;
     public TextField srcTF1;
     public TextField srcTF2;
     public TextField srcTF3;
     public TextField srcTF4;
+    private List<TextField> srcTFs;
+    public ChoiceBox<File> dstCB1;
+    public ChoiceBox<File> dstCB2;
+    public ChoiceBox<File> dstCB3;
+    public ChoiceBox<File> dstCB4;
+    private List<ChoiceBox<File>> dstCBs;
     private Stage stage;
+
+    private FilesMatcher filesMatcher = new FilesMatcher();
 
     public void setStage(Stage stage) {
         this.stage = stage;
     }
 
+    private LinkedHashSet<File> srcFiles = new LinkedHashSet<>();
+    private int srcDisplayFirstItemIndex = 0;
+    private LinkedHashSet<File> dstFiles = new LinkedHashSet<>();
+    private int dstDisplayFirstItemIndex = 0;
+    private Map<File, File> matchedSrcDstFiles;
+
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        srcTFs = new ArrayList<>(asList(srcTF1, srcTF2, srcTF3, srcTF4));
+        dstCBs = new ArrayList<>(asList(dstCB1, dstCB2, dstCB3, dstCB4));
 
-        EventHandler<DragEvent> handlerOnDragOver = new EventHandler<DragEvent>() {
-            @Override
-            public void handle(DragEvent event) {
-                if (event.getDragboard().hasFiles()) {
-                    event.acceptTransferModes(TransferMode.COPY);
-                }
-                event.consume();
-            }
-        };
+        for (TextField srcTF : srcTFs) {
+            srcTF.setOnDragOver(getOnDragOver());
+            srcTF.setOnDragDropped(getOnDragDroppedSrc());
+        }
 
-        EventHandler<DragEvent> handlerOnDragDropped = new EventHandler<DragEvent>() {
-            @Override
-            public void handle(DragEvent event) {
-                Dragboard dragboard = event.getDragboard();
-                if (dragboard.hasFiles()) {
-                    List<File> files = dragboard.getFiles();
-
-                }
-                event.consume();
-            }
-        };
-        srcTF1.setOnDragOver(handlerOnDragOver);
-        srcTF1.setOnDragDropped(handlerOnDragDropped);
-        srcTF2.setOnDragOver(handlerOnDragOver);
-        srcTF2.setOnDragDropped(handlerOnDragDropped);
-        srcTF3.setOnDragOver(handlerOnDragOver);
-        srcTF3.setOnDragDropped(handlerOnDragDropped);
-        srcTF4.setOnDragOver(handlerOnDragOver);
-        srcTF4.setOnDragDropped(handlerOnDragDropped);
+        for (ChoiceBox<File> dstCB : dstCBs) {
+            dstCB.setOnDragOver(getOnDragOver());
+            dstCB.setOnDragDropped(getOnDragDroppedDst());
+        }
 
 //        srcAliasChoiceBox.getItems().addAll(configService.getHosts());
 //        StringConverter<HostConfig> converter = new StringConverter<HostConfig>() {
@@ -120,6 +110,58 @@ public class Controller implements Initializable {
 //            }
 //        });
     }
+
+    private EventHandler<DragEvent> getOnDragOver() {
+        return event -> {
+            if (event.getDragboard().hasFiles()) {
+                event.acceptTransferModes(TransferMode.COPY);
+            }
+            event.consume();
+        };
+    }
+
+    private EventHandler<DragEvent> getOnDragDroppedSrc() {
+        return event -> {
+            Dragboard dragboard = event.getDragboard();
+            if (dragboard.hasFiles()) {
+                srcFiles.addAll(dragboard.getFiles());
+                srcFilesChanged();
+            }
+            event.consume();
+        };
+    }
+
+    private EventHandler<DragEvent> getOnDragDroppedDst() {
+        return event -> {
+            Dragboard dragboard = event.getDragboard();
+            if (dragboard.hasFiles()) {
+                dstFiles.addAll(dragboard.getFiles());
+                dstFilesChanged();
+            }
+            event.consume();
+        };
+    }
+
+    private void srcFilesChanged() {
+        System.out.println("\r\nSRC files:" + srcFiles.stream().map(f -> f.getName()).collect(Collectors.joining(",")));
+        redraw();
+    }
+
+    private void dstFilesChanged() {
+        System.out.println("\nDST files:" + dstFiles.stream().map(f -> f.getName()).collect(Collectors.joining(",")));
+        redraw();
+    }
+
+    private void redraw() {
+        matchedSrcDstFiles = filesMatcher.matchFiles(srcFiles, dstFiles);
+        for (int srcIndex = srcDisplayFirstItemIndex;
+             srcIndex < srcFiles.size() && srcIndex - srcDisplayFirstItemIndex < srcTFs.size();
+             srcIndex++) {
+            File srcFile = new ArrayList<File>(srcFiles).get(srcIndex);
+            srcTFs.get(srcIndex-srcDisplayFirstItemIndex).textProperty().setValue(srcFile.getAbsolutePath());
+        }
+    }
+
 
     public void upButtonClicked() {
         // TODO
