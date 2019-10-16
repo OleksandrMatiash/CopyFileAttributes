@@ -1,5 +1,6 @@
 package com.vortex.fileattributes;
 
+import com.vortex.fileattributes.domain.OperationResult;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -29,6 +30,12 @@ public class Controller implements Initializable {
     @FXML
     private TextField srcTF4;
     @FXML
+    private TextField srcTF5;
+    @FXML
+    private TextField srcTF6;
+    @FXML
+    private TextField srcTF7;
+    @FXML
     private ChoiceBox<String> dstCB1;
     @FXML
     private ChoiceBox<String> dstCB2;
@@ -36,6 +43,12 @@ public class Controller implements Initializable {
     private ChoiceBox<String> dstCB3;
     @FXML
     private ChoiceBox<String> dstCB4;
+    @FXML
+    private ChoiceBox<String> dstCB5;
+    @FXML
+    private ChoiceBox<String> dstCB6;
+    @FXML
+    private ChoiceBox<String> dstCB7;
 
     private FilesHelper filesHelper = new FilesHelper();
 
@@ -50,8 +63,8 @@ public class Controller implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        srcTFs = new ArrayList<>(asList(srcTF1, srcTF2, srcTF3, srcTF4));
-        dstCBs = new ArrayList<>(asList(dstCB1, dstCB2, dstCB3, dstCB4));
+        srcTFs = new ArrayList<>(asList(srcTF1, srcTF2, srcTF3, srcTF4, srcTF5, srcTF6, srcTF7));
+        dstCBs = new ArrayList<>(asList(dstCB1, dstCB2, dstCB3, dstCB4, dstCB5, dstCB6, dstCB7));
 
         for (TextField srcTF : srcTFs) {
             srcTF.setOnDragOver(getOnDragOver());
@@ -164,7 +177,12 @@ public class Controller implements Initializable {
                 AlertBox box = new AlertBox();
                 box.createAndShow("You are going to copy attributes for such files:\r\n" + warningMsg, AlertBox.Type.YES_CANCEL);
                 if (box.isYesPressed()) {
-                    filesHelper.copyAttributes(matchedFiles);
+                    OperationResult<List<String>, List<String>> result = filesHelper.copyAttributes(matchedFiles);
+                    if (result.getError() != null) {
+                        new AlertBox().createAndShow("Not updated files: \r\n"
+                                + String.join("\r\n", result.getError()),
+                                AlertBox.Type.CLOSE);
+                    }
 
                     for (Map.Entry<File, File> entry : matchedFiles.entrySet()) {
                         srcFiles.removeIf(srcFile -> srcFile.equals(entry.getKey().getAbsoluteFile()));

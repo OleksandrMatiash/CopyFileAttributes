@@ -1,14 +1,14 @@
 package com.vortex.fileattributes;
 
+import com.vortex.fileattributes.domain.OperationResult;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +46,9 @@ public class FilesHelper {
         return false;
     }
 
-    public void copyAttributes(Map<File, File> matchedFiles) {
+    public OperationResult<List<String>, List<String>> copyAttributes(Map<File, File> matchedFiles) {
+        List<String> successfullyUpdatedFiles = new ArrayList<>();
+        List<String> notUpdatedFiles = null;
         for (Map.Entry<File, File> entry : matchedFiles.entrySet()) {
             File srcFile = entry.getKey();
             File dstFile = entry.getValue();
@@ -56,9 +58,14 @@ public class FilesHelper {
                 BasicFileAttributeView dstAttrView = Files.getFileAttributeView(dstFile.toPath(), BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
 
                 dstAttrView.setTimes(srcAttr.lastModifiedTime(), srcAttr.lastAccessTime(), srcAttr.creationTime());
+                successfullyUpdatedFiles.add(dstFile.getAbsolutePath());
             } catch (IOException e) {
-                e.printStackTrace();
+                if (notUpdatedFiles == null) {
+                    notUpdatedFiles = new ArrayList<>();
+                }
+                notUpdatedFiles.add(dstFile.getAbsolutePath());
             }
         }
+        return new OperationResult<>(successfullyUpdatedFiles, notUpdatedFiles);
     }
 }
