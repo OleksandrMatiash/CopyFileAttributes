@@ -27,7 +27,7 @@ public class MainGui extends Application {
         FXMLLoader loader = new FXMLLoader(resource);
         Parent root = loader.load();
         controller = loader.getController();
-        controller.setStage(primaryStage);
+//        controller.setStage(primaryStage);
         primaryStage.setTitle("Cheat Icons Distributor v." + properties.getProperty("version"));
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
@@ -35,7 +35,7 @@ public class MainGui extends Application {
 
     @Override
     public void stop() throws Exception {
-        controller.stop();
+//        controller.stop();
         super.stop();
     }
 }

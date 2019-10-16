@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<VBox prefHeight="450.0" prefWidth="700.0" spacing="5.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vortex.fileattributes.Controller">
+<VBox prefHeight="450.0" prefWidth="1200.0" spacing="5.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.vortex.fileattributes.Controller">
     <children>
         <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="50.0" spacing="10.0">
             <children>
@@ -33,13 +33,13 @@
             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-            <ChoiceBox fx:id="dstCB1" prefHeight="25.0" prefWidth="334.0" GridPane.columnIndex="1" />
+            <ChoiceBox fx:id="dstCB1" prefHeight="25.0" prefWidth="1000.0" GridPane.columnIndex="1" />
             <TextField fx:id="srcTF1" editable="false" />
-            <ChoiceBox fx:id="dstCB2" layoutX="350.0" layoutY="13.0" prefWidth="334.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <ChoiceBox fx:id="dstCB2" layoutX="350.0" layoutY="13.0" prefHeight="25.0" prefWidth="1000.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
             <TextField fx:id="srcTF2" editable="false" layoutX="10.0" layoutY="13.0" GridPane.rowIndex="1" />
-            <ChoiceBox fx:id="dstCB3" layoutX="350.0" layoutY="13.0" prefWidth="334.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <ChoiceBox fx:id="dstCB3" layoutX="350.0" layoutY="13.0" prefWidth="1000.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
             <TextField fx:id="srcTF3" editable="false" layoutX="10.0" layoutY="13.0" GridPane.rowIndex="2" />
-            <ChoiceBox fx:id="dstCB4" layoutX="350.0" layoutY="13.0" prefWidth="334.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <ChoiceBox fx:id="dstCB4" layoutX="350.0" layoutY="13.0" prefWidth="1000.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
             <TextField fx:id="srcTF4" editable="false" layoutX="10.0" layoutY="13.0" GridPane.rowIndex="3" />
          </children>
       </GridPane>

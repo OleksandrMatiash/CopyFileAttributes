@@ -1,6 +1,8 @@
 package com.vortex.fileattributes;
 
+import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextField;
@@ -18,43 +20,38 @@ import static java.util.Arrays.asList;
 
 public class Controller implements Initializable {
 
-//    private static final String OK = "OK";
-//    private static ConfigService configService = new ConfigService();
-//    public ChoiceBox<String> srcAliasChoiceBox;
-//    public ChoiceBox<HostConfig> dstAliasChoiceBox;
-//    public TextField srcHostTextField;
-//    public TextField srcDbTextField;
-//    public TextField dstHostTextField;
-//    public TextField dstDbTextField;
-//    public Text srcConnectionStatus;
-//    public Text dstConnectionStatus;
-//    public ChoiceBox<String> srcSlotsChoiceBox;
-//    public ListView<String> srcIconsListView;
-//    public Button copyBtn;
-
-    public TextField srcTF1;
-    public TextField srcTF2;
-    public TextField srcTF3;
-    public TextField srcTF4;
-    private List<TextField> srcTFs;
-    public ChoiceBox<File> dstCB1;
-    public ChoiceBox<File> dstCB2;
-    public ChoiceBox<File> dstCB3;
-    public ChoiceBox<File> dstCB4;
-    private List<ChoiceBox<File>> dstCBs;
-    private Stage stage;
+    @FXML
+    private TextField srcTF1;
+    @FXML
+    private TextField srcTF2;
+    @FXML
+    private TextField srcTF3;
+    @FXML
+    private TextField srcTF4;
+    @FXML
+    private ChoiceBox<String> dstCB1;
+    @FXML
+    private ChoiceBox<String> dstCB2;
+    @FXML
+    private ChoiceBox<String> dstCB3;
+    @FXML
+    private ChoiceBox<String> dstCB4;
 
     private FilesMatcher filesMatcher = new FilesMatcher();
 
-    public void setStage(Stage stage) {
-        this.stage = stage;
-    }
+//    private Stage stage;
+    private List<TextField> srcTFs;
+    private List<ChoiceBox<String>> dstCBs;
 
-    private LinkedHashSet<File> srcFiles = new LinkedHashSet<>();
-    private int srcDisplayFirstItemIndex = 0;
-    private LinkedHashSet<File> dstFiles = new LinkedHashSet<>();
-    private int dstDisplayFirstItemIndex = 0;
-    private Map<File, File> matchedSrcDstFiles;
+
+//    public void setStage(Stage stage) {
+//        this.stage = stage;
+//    }
+
+    private Set<File> srcFiles = new LinkedHashSet<>();
+    private Set<File> dstFiles = new LinkedHashSet<>();
+    private Map<String, String> matchedFiles = new HashMap<>();
+    private int displayFirstItemIndex = 0;
 
 
     @Override
@@ -66,49 +63,11 @@ public class Controller implements Initializable {
             srcTF.setOnDragOver(getOnDragOver());
             srcTF.setOnDragDropped(getOnDragDroppedSrc());
         }
-
-        for (ChoiceBox<File> dstCB : dstCBs) {
-            dstCB.setOnDragOver(getOnDragOver());
-            dstCB.setOnDragDropped(getOnDragDroppedDst());
+        for (ChoiceBox<String> dstChoiceBox : dstCBs) {
+            dstChoiceBox.setOnDragOver(getOnDragOver());
+            dstChoiceBox.setOnDragDropped(getOnDragDroppedDst());
         }
-
-//        srcAliasChoiceBox.getItems().addAll(configService.getHosts());
-//        StringConverter<HostConfig> converter = new StringConverter<HostConfig>() {
-//            @Override
-//            public String toString(HostConfig object) {
-//                return object.getAlias();
-//            }
-//
-//            @Override
-//            public HostConfig fromString(String string) {
-//                return null;
-//            }
-//        };
-//        srcAliasChoiceBox.setConverter(converter);
-//        srcAliasChoiceBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-//            srcHostTextField.setText(newValue.getHost());
-//            srcDbTextField.setText(newValue.getIconsDbName());
-//        });
-//
-//        dstAliasChoiceBox.getItems().addAll(configService.getHosts());
-//        dstAliasChoiceBox.setConverter(converter);
-//        dstAliasChoiceBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-//            dstHostTextField.setText(newValue.getHost());
-//            dstDbTextField.setText(newValue.getIconsDbName());
-//        });
-//
-//        srcHostTextField.textProperty().addListener((observable, oldValue, newValue) -> resetSrc());
-//        srcDbTextField.textProperty().addListener((observable, oldValue, newValue) -> resetSrc());
-//
-//        dstHostTextField.textProperty().addListener((observable, oldValue, newValue) -> dstConnectionStatus.setText(""));
-//        dstDbTextField.textProperty().addListener((observable, oldValue, newValue) -> dstConnectionStatus.setText(""));
-//
-//        srcSlotsChoiceBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-//            srcIconsListView.getItems().clear();
-//            if (newValue != null && !newValue.isEmpty()) {
-//                srcIconsListView.getItems().addAll(dao.getSlotIcons(fieldValue(srcHostTextField), fieldValue(srcDbTextField), newValue));
-//            }
-//        });
+        redraw();
     }
 
     private EventHandler<DragEvent> getOnDragOver() {
@@ -144,101 +103,75 @@ public class Controller implements Initializable {
 
     private void srcFilesChanged() {
         System.out.println("\r\nSRC files:" + srcFiles.stream().map(f -> f.getName()).collect(Collectors.joining(",")));
-        redraw();
+        filesChanged();
     }
 
     private void dstFilesChanged() {
         System.out.println("\nDST files:" + dstFiles.stream().map(f -> f.getName()).collect(Collectors.joining(",")));
+        filesChanged();
+    }
+
+    private void filesChanged() {
+        Map<String, String> autoMatched = filesMatcher.matchFiles(srcFiles, dstFiles);
+        for (Map.Entry<String, String> entry : autoMatched.entrySet()) {
+            matchedFiles.put(entry.getKey(), entry.getValue());
+        }
+
         redraw();
     }
 
     private void redraw() {
-        matchedSrcDstFiles = filesMatcher.matchFiles(srcFiles, dstFiles);
-        for (int srcIndex = srcDisplayFirstItemIndex;
-             srcIndex < srcFiles.size() && srcIndex - srcDisplayFirstItemIndex < srcTFs.size();
-             srcIndex++) {
-            File srcFile = new ArrayList<File>(srcFiles).get(srcIndex);
-            srcTFs.get(srcIndex-srcDisplayFirstItemIndex).textProperty().setValue(srcFile.getAbsolutePath());
+        List<String> srcList = srcFiles.stream()
+                .map(File::getAbsolutePath)
+                .collect(Collectors.toList());
+        List<String> dstList = dstFiles.stream()
+                .map(File::getAbsolutePath)
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < srcTFs.size(); i++) {
+            if (i + displayFirstItemIndex < srcList.size()) {
+                String srcFilename = srcList.get(i + displayFirstItemIndex);
+                srcTFs.get(i).textProperty().setValue(srcFilename);
+
+                ChoiceBox<String> choiceBox = dstCBs.get(i);
+                choiceBox.disableProperty().set(false);
+                choiceBox.setItems(FXCollections.observableList(dstList)); //
+                if (matchedFiles.containsKey(srcFilename)) {
+                    choiceBox.getSelectionModel().select(matchedFiles.get(srcFilename));
+                }
+            } else {
+                srcTFs.get(i).textProperty().setValue("");
+                ChoiceBox<String> choiceBox = dstCBs.get(i);
+                choiceBox.disableProperty().set(true);
+            }
         }
     }
 
 
     public void upButtonClicked() {
-        // TODO
+        if (displayFirstItemIndex > 0) {
+            saveSelection();
+            displayFirstItemIndex--;
+            redraw();
+        }
     }
 
     public void downButtonClicked() {
-        // TODO
+        if (displayFirstItemIndex < Math.max(srcFiles.size(), dstFiles.size()) - srcTFs.size()) {
+            saveSelection();
+            displayFirstItemIndex++;
+            redraw();
+        }
     }
 
-    //    private void resetSrc() {
-//        srcConnectionStatus.setText("");
-//        srcSlotsChoiceBox.getItems().clear();
-//        srcIconsListView.getItems().clear();
-//    }
-//
-//    private String fieldValue(TextField field) {
-//        return field.getText().trim();
-//    }
-//
-//    public void checkConnectionSrcClicked() {
-//        String host = fieldValue(srcHostTextField);
-//        String db = fieldValue(srcDbTextField);
-//        if (!host.isEmpty() && !db.isEmpty() && dao.testConnection(host, db)) {
-//            srcConnectionStatus.setText(OK);
-//            srcSlotsChoiceBox.getItems().addAll(dao.getSlots(host, db));
-//            srcSlotsChoiceBox.getSelectionModel().selectFirst();
-//        } else {
-//            srcConnectionStatus.setText("FAIL");
-//            srcSlotsChoiceBox.getItems().clear();
-//            srcIconsListView.getItems().clear();
-//        }
-//    }
-//
-//    public void checkConnectionDstClicked() {
-//        String host = fieldValue(dstHostTextField);
-//        String db = fieldValue(dstDbTextField);
-//        if (!host.isEmpty() && !db.isEmpty() && dao.testConnection(host, db)) {
-//            dstConnectionStatus.setText(OK);
-//        } else {
-//            dstConnectionStatus.setText("FAIL");
-//        }
-//    }
-//
-//    public void copyBtnClicked() {
-//        if (!OK.equals(srcConnectionStatus.getText())) {
-//            new AlertBox().createAndShow("Connect to FROM first", AlertBox.Type.CLOSE);
-//        } else if (!OK.equals(dstConnectionStatus.getText())) {
-//            new AlertBox().createAndShow("Connect to TO first", AlertBox.Type.CLOSE);
-//        } else if (OK.equals(srcConnectionStatus.getText()) && OK.equals(dstConnectionStatus.getText())) {
-//            if (fieldValue(srcHostTextField).equals(fieldValue(dstHostTextField)) && fieldValue(srcDbTextField).equals(fieldValue(dstDbTextField))) {
-//                new AlertBox().createAndShow("FROM and TO are equals", AlertBox.Type.CLOSE);
-//            } else {
-//                boolean alreadyExists = dao.validateIconsNotExistOnDst(fieldValue(srcHostTextField), fieldValue(srcDbTextField), srcSlotsChoiceBox.getValue(),
-//                        fieldValue(dstHostTextField), fieldValue(dstDbTextField));
-//
-//                if (alreadyExists) {
-//                    AlertBox alertBox = new AlertBox();
-//                    alertBox.createAndShow("Icons already exist on destination. Replace old icons?", AlertBox.Type.YES_CANCEL);
-//                    if (!alertBox.isYesPressed()) {
-//                        return;
-//                    }
-//                    dao.removeIconsFromDst(fieldValue(dstHostTextField), fieldValue(dstDbTextField), srcSlotsChoiceBox.getValue());
-//                }
-//
-//                dao.copyIconsFromSrcToDst(fieldValue(srcHostTextField), fieldValue(srcDbTextField), srcSlotsChoiceBox.getValue(),
-//                        fieldValue(dstHostTextField), fieldValue(dstDbTextField));
-//
-////                Dialog dialog = new Dialog(DialogType.INFORMATION,
-////                        "Success",
-////                        "Icons are copied!!!");
-////                dialog.showAndWait();
-//                new AlertBox().createAndShow("Icons are copied!!!", AlertBox.Type.CLOSE);
-//            }
-//        }
-//    }
-//
-    public void stop() {
-//        dao.closeConnections();
+    private void saveSelection() {
+        for (int i = 0; i < srcTFs.size(); i++) {
+            String key = srcTFs.get(i).textProperty().getValue();
+            if (key != null && !key.isEmpty()) {
+                String value = dstCBs.get(i).getSelectionModel().getSelectedItem();
+                matchedFiles.put(key, value);
+            }
+        }
     }
+
 }

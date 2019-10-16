@@ -56,7 +56,7 @@ public class FilesMatcherTest {
         HashSet<File> dstFiles = new HashSet<>();
         dstFiles.add(getFile("/B.txt"));
 
-        Map<File, File> result = new FilesMatcher().matchFiles(srcFiles, dstFiles);
+        Map<String, String> result = new FilesMatcher().matchFiles(srcFiles, dstFiles);
 
         assertTrue(result.isEmpty());
     }
@@ -70,11 +70,11 @@ public class FilesMatcherTest {
         dstFiles.add(getFile("/innerDirectory/A_.txt"));
         dstFiles.add(getFile("/innerDirectory/a.pdf"));
 
-        Map<File, File> result = new FilesMatcher().matchFiles(srcFiles, dstFiles);
+        Map<String, String> result = new FilesMatcher().matchFiles(srcFiles, dstFiles);
 
         assertEquals(1, result.size());
-        assertEquals("A.txt", result.keySet().iterator().next().getName());
-        assertEquals("A_.txt", result.values().iterator().next().getName());
+        assertTrue(result.keySet().iterator().next().contains("A.txt"));
+        assertTrue(result.values().iterator().next().contains("A_.txt"));
     }
 
     private static String getExecutionPath() {

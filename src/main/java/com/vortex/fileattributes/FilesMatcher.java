@@ -10,16 +10,19 @@ import java.util.regex.Pattern;
 public class FilesMatcher {
 
 
-    public static final Pattern SRC_PATTERN = Pattern.compile("(.*)\\..*");
-    public static final String DST_PATTERN_SUFFIX = "[_]{0,}\\..*";
+    private static final Pattern SRC_PATTERN = Pattern.compile("(.*)\\..*");
+    private static final String DST_PATTERN_SUFFIX = "[_]{0,}\\..*";
 
-    public Map<File, File> matchFiles(Set<File> srcFiles, Set<File> dstFiles) {
-        Map<File, File> result = new HashMap<>();
+    public Map<String, String> matchFiles(Set<File> srcFiles, Set<File> dstFiles) {
+        Map<String, String> result = new HashMap<>();
         for (File srcFile : srcFiles) {
             for (File dstFile : dstFiles) {
-                if (srcFile.isFile() && dstFile.isFile() && !result.containsKey(srcFile) && !result.containsValue(dstFile)
+                if (srcFile.isFile() && dstFile.isFile()
+                        && !result.containsKey(srcFile.getAbsolutePath())
+                        && !result.containsValue(dstFile.getAbsolutePath())
                         && isFilesMatch(srcFile, dstFile)) {
-                    result.put(srcFile, dstFile);
+
+                    result.put(srcFile.getAbsolutePath(), dstFile.getAbsolutePath());
                 }
             }
         }
@@ -34,7 +37,7 @@ public class FilesMatcher {
             Matcher dstMatcher = Pattern.compile(srcNameWithoutExtension + DST_PATTERN_SUFFIX).matcher(dstFile.getName().toLowerCase());
             return dstMatcher.matches();
         } else {
-            System.out.println("something went wrong!");
+            System.err.println("something went wrong!");
         }
         return false;
     }
