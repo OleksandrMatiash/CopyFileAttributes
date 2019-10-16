@@ -10,7 +10,7 @@
     <children>
         <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="50.0" spacing="10.0">
             <children>
-                <Button fx:id="upButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#upButtonClicked" prefWidth="110.0" text="UP">
+                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#upButtonClicked" prefWidth="110.0" text="UP">
                     <padding>
                         <Insets bottom="5.0" top="5.0" />
                     </padding>
@@ -45,7 +45,12 @@
       </GridPane>
       <HBox alignment="CENTER_LEFT" layoutX="20.0" layoutY="20.0" spacing="10.0">
          <children>
-            <Button fx:id="downButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#downButtonClicked" prefWidth="110.0" text="DOWN">
+            <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#downButtonClicked" prefWidth="110.0" text="DOWN">
+               <padding>
+                  <Insets bottom="5.0" top="5.0" />
+               </padding>
+            </Button>
+            <Button layoutX="20.0" layoutY="20.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#copyButtonClicked" prefWidth="150.0" text="COPY ATTRIBUTES">
                <padding>
                   <Insets bottom="5.0" top="5.0" />
                </padding>

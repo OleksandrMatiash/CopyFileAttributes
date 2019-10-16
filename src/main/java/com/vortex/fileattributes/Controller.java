@@ -1,6 +1,7 @@
 package com.vortex.fileattributes;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -9,7 +10,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.stage.Stage;
 
 import java.io.File;
 import java.net.URL;
@@ -37,20 +37,14 @@ public class Controller implements Initializable {
     @FXML
     private ChoiceBox<String> dstCB4;
 
-    private FilesMatcher filesMatcher = new FilesMatcher();
+    private FilesHelper filesHelper = new FilesHelper();
 
-//    private Stage stage;
     private List<TextField> srcTFs;
     private List<ChoiceBox<String>> dstCBs;
 
-
-//    public void setStage(Stage stage) {
-//        this.stage = stage;
-//    }
-
     private Set<File> srcFiles = new LinkedHashSet<>();
     private Set<File> dstFiles = new LinkedHashSet<>();
-    private Map<String, String> matchedFiles = new HashMap<>();
+    private Map<String, String> matchedFileNames = new HashMap<>();
     private int displayFirstItemIndex = 0;
 
 
@@ -84,7 +78,7 @@ public class Controller implements Initializable {
             Dragboard dragboard = event.getDragboard();
             if (dragboard.hasFiles()) {
                 srcFiles.addAll(dragboard.getFiles());
-                srcFilesChanged();
+                filesChanged();
             }
             event.consume();
         };
@@ -95,26 +89,17 @@ public class Controller implements Initializable {
             Dragboard dragboard = event.getDragboard();
             if (dragboard.hasFiles()) {
                 dstFiles.addAll(dragboard.getFiles());
-                dstFilesChanged();
+                filesChanged();
             }
             event.consume();
         };
     }
 
-    private void srcFilesChanged() {
-        System.out.println("\r\nSRC files:" + srcFiles.stream().map(f -> f.getName()).collect(Collectors.joining(",")));
-        filesChanged();
-    }
-
-    private void dstFilesChanged() {
-        System.out.println("\nDST files:" + dstFiles.stream().map(f -> f.getName()).collect(Collectors.joining(",")));
-        filesChanged();
-    }
-
     private void filesChanged() {
-        Map<String, String> autoMatched = filesMatcher.matchFiles(srcFiles, dstFiles);
+        saveSelection();
+        Map<String, String> autoMatched = filesHelper.matchFiles(srcFiles, dstFiles);
         for (Map.Entry<String, String> entry : autoMatched.entrySet()) {
-            matchedFiles.put(entry.getKey(), entry.getValue());
+            matchedFileNames.put(entry.getKey(), entry.getValue());
         }
 
         redraw();
@@ -135,9 +120,11 @@ public class Controller implements Initializable {
 
                 ChoiceBox<String> choiceBox = dstCBs.get(i);
                 choiceBox.disableProperty().set(false);
-                choiceBox.setItems(FXCollections.observableList(dstList)); //
-                if (matchedFiles.containsKey(srcFilename)) {
-                    choiceBox.getSelectionModel().select(matchedFiles.get(srcFilename));
+                ObservableList<String> observableList = FXCollections.observableArrayList(dstList);
+                observableList.add(0, null);
+                choiceBox.setItems(observableList);
+                if (matchedFileNames.containsKey(srcFilename)) {
+                    choiceBox.getSelectionModel().select(matchedFileNames.get(srcFilename));
                 }
             } else {
                 srcTFs.get(i).textProperty().setValue("");
@@ -147,8 +134,8 @@ public class Controller implements Initializable {
         }
     }
 
-
-    public void upButtonClicked() {
+    @FXML
+    private void upButtonClicked() {
         if (displayFirstItemIndex > 0) {
             saveSelection();
             displayFirstItemIndex--;
@@ -156,7 +143,8 @@ public class Controller implements Initializable {
         }
     }
 
-    public void downButtonClicked() {
+    @FXML
+    private void downButtonClicked() {
         if (displayFirstItemIndex < Math.max(srcFiles.size(), dstFiles.size()) - srcTFs.size()) {
             saveSelection();
             displayFirstItemIndex++;
@@ -164,12 +152,79 @@ public class Controller implements Initializable {
         }
     }
 
+    @FXML
+    private void copyButtonClicked() {
+        saveSelection();
+        if (checkDuplicatesInDst()) {
+            Map<File, File> matchedFiles = convertToMatchedFiles(matchedFileNames);
+            if (!matchedFiles.isEmpty()) {
+                String warningMsg = matchedFiles.entrySet().stream()
+                        .map(e -> e.getKey().getAbsolutePath() + " -> " + e.getValue().getAbsolutePath())
+                        .collect(Collectors.joining("\r\n"));
+                AlertBox box = new AlertBox();
+                box.createAndShow("You are going to copy attributes for such files:\r\n" + warningMsg, AlertBox.Type.YES_CANCEL);
+                if (box.isYesPressed()) {
+                    filesHelper.copyAttributes(matchedFiles);
+
+                    for (Map.Entry<File, File> entry : matchedFiles.entrySet()) {
+                        srcFiles.removeIf(srcFile -> srcFile.equals(entry.getKey().getAbsoluteFile()));
+                        dstFiles.removeIf(dstFile -> dstFile.equals(entry.getValue().getAbsoluteFile()));
+                    }
+                    displayFirstItemIndex = 0;
+                    matchedFileNames.clear();
+                    redraw();
+                }
+            }
+        }
+    }
+
+    private Map<File, File> convertToMatchedFiles(Map<String, String> matchedFileNames) {
+        Map<File, File> result = new HashMap<>();
+        for (Map.Entry<String, String> entry : matchedFileNames.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                result.put(getFileByName(entry.getKey(), srcFiles), getFileByName(entry.getValue(), dstFiles));
+            }
+        }
+        return result;
+    }
+
+    private File getFileByName(String name, Collection<File> files) {
+        for (File file : files) {
+            if (file.getAbsolutePath().equals(name)) {
+                return file;
+            }
+        }
+        throw new IllegalArgumentException("can't get file by it's name: " + name);
+    }
+
+    private boolean checkDuplicatesInDst() {
+        Set<String> alreadyMatched = new HashSet<>();
+        Set<String> duplicates = new HashSet<>();
+        for (String candidate : matchedFileNames.values()) {
+            if (candidate != null) {
+                if (alreadyMatched.contains(candidate)) {
+                    duplicates.add(candidate);
+                } else {
+                    alreadyMatched.add(candidate);
+                }
+            }
+        }
+
+        if (!duplicates.isEmpty()) {
+
+            new AlertBox().createAndShow("there are duplicates in dst files:\r\n" +
+                    String.join("\r\n", duplicates), AlertBox.Type.CLOSE);
+            return false;
+        }
+        return true;
+    }
+
     private void saveSelection() {
         for (int i = 0; i < srcTFs.size(); i++) {
             String key = srcTFs.get(i).textProperty().getValue();
             if (key != null && !key.isEmpty()) {
                 String value = dstCBs.get(i).getSelectionModel().getSelectedItem();
-                matchedFiles.put(key, value);
+                matchedFileNames.put(key, value);
             }
         }
     }

@@ -1,14 +1,18 @@
 package com.vortex.fileattributes;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FilesMatcher {
-
+public class FilesHelper {
 
     private static final Pattern SRC_PATTERN = Pattern.compile("(.*)\\..*");
     private static final String DST_PATTERN_SUFFIX = "[_]{0,}\\..*";
@@ -40,5 +44,21 @@ public class FilesMatcher {
             System.err.println("something went wrong!");
         }
         return false;
+    }
+
+    public void copyAttributes(Map<File, File> matchedFiles) {
+        for (Map.Entry<File, File> entry : matchedFiles.entrySet()) {
+            File srcFile = entry.getKey();
+            File dstFile = entry.getValue();
+
+            try {
+                BasicFileAttributes srcAttr = Files.getFileAttributeView(srcFile.toPath(), BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).readAttributes();
+                BasicFileAttributeView dstAttrView = Files.getFileAttributeView(dstFile.toPath(), BasicFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
+
+                dstAttrView.setTimes(srcAttr.lastModifiedTime(), srcAttr.lastAccessTime(), srcAttr.creationTime());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
